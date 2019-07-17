@@ -1,0 +1,12 @@
+[Match]
+Name=ens8
+
+[Network]
+DHCP=no
+Address=172.27.100.10/24
+DNS=172.27.100.1
+
+[Route]
+Gateway=172.27.100.1
+Scope=global
+GatewayOnLink=yes

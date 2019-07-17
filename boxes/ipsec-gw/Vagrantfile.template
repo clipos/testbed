@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# Copyright © 2019 ANSSI. All rights reserved.
+
+# Vagrantfile to use by Packer to create the "clipos-testbed/ipsec-gw" box.
+#
+# Important note: This is a "Go-templatized" Vagrantfile with for only
+# templatized variables "BoxName" "SyncedFolder" variables (see Packer docs
+# related to Vagrant builder for more information).
+
+Vagrant.configure("2") do |config|
+  config.vm.box = "{{ .BoxName }}"
+
+  # Expose the "/vagrant" synced folder with 9p/virtio in passthrough mode
+  # rather than the default NFS method:
+  config.vm.synced_folder "{{ .SyncedFolder }}", "/vagrant",
+    type: "9p", accessmode: "passthrough", mount: true
+
+  # Do not automatically change the SSH keypair for a newly generated key pair
+  # otherwise we would need to re-embed the default insecure Vagrant SSH key
+  # pair in the final image:
+  #
+  # SECURITY WARNING: This is insecure but tolerated here because we are
+  # expecting to create another Vagrant box from the VM we are creating out of
+  # this Vagrantfile.
+  config.ssh.insert_key = false
+
+  # Common settings for the libvirt provider
+  config.vm.provider "libvirt" do |libvirt|
+    libvirt.default_prefix = "packer_clipos-testbed_"
+
+    # Use QEMU/KVM as the libvirt driver:
+    libvirt.driver = "kvm"
+  end
+end
+
+# vim: set ft=ruby ts=2 sts=2 sw=2 et ai tw=79:

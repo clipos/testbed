@@ -1,0 +1,74 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# Copyright © 2019 ANSSI. All rights reserved.
+
+# Packer template file for the Debian IPsec gateway
+#
+# Note: Packer expects a JSON file, not a YAML one. Please use the "yaml2json"
+# script provided with this file to convert this into a JSON file (comments
+# will be lost as JSON does not support comments).
+
+builders:
+  - name: 'ipsec-gw'
+    type: 'vagrant'
+    communicator: 'ssh'
+
+    source_path: "debian/buster64"
+    skip_add: true
+    provider: "libvirt"  # vagrant-libvirt provider is required in all cases
+    box_name: "packer_clipos-testbed_"
+
+    # The Vagrantfile template that will be used to spin up the VM:
+    # Important note: For our use case, it is important to disable the
+    # automatic SSH keypair substitution to make sure that we still get the
+    # Vagrant public insecure SSH keys once packed into a Vagrant box.
+    template: "./Vagrantfile.template"
+
+    # Directories:
+    output_dir: 'output'
+
+    # Destroy the VM after the provisioning:
+    teardown_method: 'destroy'
+
+
+provisioners:
+  - type: 'file'
+    # This oneshot unit is required to re-generate the SSHD host keys that are
+    # automatically deleted with the Vagrant provider `vagrant-libvirt` when
+    # packing this VM as a box. (`vagrant-libvirt` uses `virt-sysprep` which
+    # automatically deletes sshd host keys.)
+    source: 'config/sshd-keygen.service'
+    destination: '/tmp/sshd-keygen.service'
+
+  - type: 'shell'
+    environment_vars: [
+      "DEBIAN_FRONTEND=noninteractive",
+      "LANG=C.UTF-8",
+    ]
+    # HACK: Change the script commandline to get the following provisioning
+    # shell commands run as root:
+    execute_command: "chmod +x {{ .Path }}; sudo {{ .Vars }} {{ .Path }}"
+    inline: [
+      # Update both packages index and installed packages
+      "apt-get -y -q update",
+      "apt-get -y -q --no-install-recommends upgrade",
+
+      # Install strongSwan (with swanctl utilities and systemd interfacing)
+      "apt-get -y -q install charon-systemd",
+
+      # Install nginx
+      "apt-get -y -q install nginx",
+
+      # Install supplementary handy tools for developer/tester convenience
+      "apt-get -y -q install vim bash-completion tmux openssl tree",
+
+      # Sets appropriate hostname
+      "sh -c 'echo \"ipsec-gw\" > /etc/hostname'",
+
+      # Installs the sshd-keygen oneshot service dropped in /tmp:
+      "install -v -o 0 -g 0 -m 0644 /tmp/sshd-keygen.service /etc/systemd/system/sshd-keygen.service",
+      "systemctl add-wants ssh.service sshd-keygen.service",
+      "rm -v /tmp/sshd-keygen.service",
+      "sync",
+    ]
+
+# vim: set ft=yaml ts=2 sts=2 sw=2 et ai tw=79:

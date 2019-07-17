@@ -1,0 +1,14 @@
+#!/usr/bin/env ruby
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# Copyright © 2019 ANSSI. All rights reserved.
+
+# Just a simple YAML to JSON converter. YAML provides comments (whereas JSON
+# does not) and Ruby should be available to the users using Packer and Vagrant
+# (because Vagrant requires Ruby).
+
+require 'json'
+require 'yaml'
+
+puts JSON.pretty_generate(YAML.safe_load(ARGF))
+
+# vim: set ft=ruby ts=2 sts=2 sw=2 et ai tw=79:
