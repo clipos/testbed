@@ -8,12 +8,11 @@
 # related to Vagrant builder for more information).
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "{{ .BoxName }}"
+  config.vm.box = "debian/buster64"
 
   # Expose the "/vagrant" synced folder with 9p/virtio in passthrough mode
   # rather than the default NFS method:
-  config.vm.synced_folder "{{ .SyncedFolder }}", "/vagrant",
-    type: "9p", accessmode: "passthrough", mount: true
+  config.vm.synced_folder ".", "/vagrant", type: "9p", accessmode: "passthrough", mount: true
 
   # Do not automatically change the SSH keypair for a newly generated key pair
   # otherwise we would need to re-embed the default insecure Vagrant SSH key

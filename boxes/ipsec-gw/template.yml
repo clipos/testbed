@@ -15,7 +15,6 @@ builders:
     source_path: "debian/buster64"
     skip_add: true
     provider: "libvirt"  # vagrant-libvirt provider is required in all cases
-    box_name: "packer_clipos-testbed_"
 
     # The Vagrantfile template that will be used to spin up the VM:
     # Important note: For our use case, it is important to disable the
