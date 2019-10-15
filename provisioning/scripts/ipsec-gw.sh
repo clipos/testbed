@@ -29,7 +29,9 @@ echo "127.0.0.1 ipsec-gw" >> /etc/hosts
 echo " [*] Setup nginx configuration for updates..."
 ln -s /vagrant/https/update.clip-os.org.conf /etc/nginx/conf.d/update.clip-os.org.conf
 
-echo " [*] Enable & start nginx..."
-systemctl enable --now nginx
+echo " [*] Restart nginx service..."
+systemctl restart nginx
+
+echo " [*] Done"
 
 # vim: set ts=4 sts=4 sw=4 et ft=sh:
