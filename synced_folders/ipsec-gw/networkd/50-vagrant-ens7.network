@@ -1,0 +1,15 @@
+[Match]
+Name=ens7
+
+[Network]
+DHCP=no
+
+# Local network static address
+Address=172.27.1.10/24
+DNS=172.27.1.1
+
+# IPsec tunnel address
+Address=172.27.100.10/24
+
+[Route]
+Gateway=172.27.1.1

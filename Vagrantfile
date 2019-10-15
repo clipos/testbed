@@ -21,15 +21,12 @@ Vagrant.configure("2") do |config|
   config.vm.define "ipsec-gw" do |ipsecgw|
     ipsecgw.vm.box = "clipos-testbed/ipsec-gw"
 
-    # Main network interface corresponding to the CLIP OS workstations LAN:
-    ipsecgw.vm.network "private_network", libvirt__forward_mode: "none",
-      libvirt__network_name: "#{ENVNAME}_workstation-network",
-      ip: "172.27.1.10", libvirt__netmask: "255.255.255.0"
-
-    # Network interface NAT'ed with the outside world (i.e. the host network):
+    # Main local network interface with internet access. CLIP OS workstations
+    # and gateway will be connected to this network.
     ipsecgw.vm.network "private_network", libvirt__forward_mode: "nat",
-      libvirt__network_name: "#{ENVNAME}_natted-network",
-      ip: "172.27.100.10", libvirt__netmask: "255.255.255.0"
+      libvirt__network_name: "#{ENVNAME}_local-network",
+      libvirt__dhcp_start: "172.27.1.11", libvirt__dhcp_stop: "172.27.1.99",
+      ip: "172.27.1.10", libvirt__netmask: "255.255.255.0"
 
     # Provider-specific settings for this VM:
     ipsecgw.vm.provider "libvirt" do |libvirt|

@@ -5,7 +5,7 @@
 set -eu -o pipefail
 
 echo " [*] Fix networkd configuration..."
-for f in "50-vagrant-ens8.network" "99-dhcp.network"; do
+for f in "50-vagrant-ens7.network" "99-dhcp.network"; do
     install -v -o 0 -g 0 -m 0644 "/vagrant/networkd/${f}" "/etc/systemd/network/${f}"
 done
 
