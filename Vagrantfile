@@ -43,7 +43,7 @@ Vagrant.configure("2") do |config|
       type: "9p", accessmode: "passthrough", mount: true
 
     # Provisioning:
-    ipsecgw.vm.provision "shell", path: "provisioning/scripts/ipsec-gw.sh"
+    ipsecgw.vm.provision "shell", path: "provisioning/ipsec-gw.sh"
   end
 
 end
