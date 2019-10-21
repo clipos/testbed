@@ -1,3 +1,8 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# Copyright © 2019 ANSSI. All rights reserved.
+# Imported from Arch Linux openssh package:
+# https://git.archlinux.org/svntogit/packages.git/tree/trunk?h=packages/openssh
+
 [Unit]
 Description=SSH Key Generation
 Before=sshd.service
