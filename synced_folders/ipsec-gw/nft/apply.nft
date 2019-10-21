@@ -1,0 +1,210 @@
+#!/usr/sbin/nft -f
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# Copyright © 2019 ANSSI. All rights reserved.
+
+# Flush all rules
+flush ruleset
+
+# vagrant-libvirt management interface
+define libvirt_iface = "ens6"
+
+# Public network interface
+define public_iface =  "ens7"
+define public_ip =     172.27.1.10
+
+# IP address and range for private network available only over an IPsec tunnel.
+# This is specific to each deployment.
+define private_ip =    172.27.100.10
+define private_net =   172.27.100.0/24
+
+# Warning: Filter only IPv4. IPv6 is dropped by default at the end.
+table ip filter {
+    # Main chain to filter input traffic
+    chain input {
+        # Drop everything by default
+        type filter hook input priority 0; policy drop;
+
+        # Drop invalid connections
+        ct state invalid drop
+
+        # Match loopback traffic
+        iif lo jump input_lo
+
+        # Vagrant-libvirt management interface
+        iifname $libvirt_iface jump input_libvirt
+
+        # Internet exposed interface, public traffic
+        iifname $public_iface ip daddr $public_ip jump input_public
+
+        # Internet exposed interface, IPsec only traffic
+        # iifname $public_iface rt ipsec exists jump input_ipsec
+        # Workaround as Debian does not have CONFIG_NFT_XFRM=y yet
+        iifname $public_iface ip daddr $private_net jump input_ipsec
+
+        # Log everything else
+        log prefix "INPUT (reject): "
+
+        # Reject everything else
+        reject with icmp type port-unreachable
+    }
+
+    # Loopback
+    chain input_lo {
+        # Do not filter localhost for now
+        accept
+    }
+
+    # Vagrant-libvirt management interface
+    chain input_libvirt {
+        # Do not apply any filter on management interface
+        accept
+    }
+
+    # Internet incoming traffic
+    chain input_public {
+        # DEBUG
+        # log prefix "INPUT PUBLIC: "
+
+        # Accept currently established connections
+        ct state established accept
+
+        # ICMP whitelist
+        ip protocol icmp icmp type { echo-reply, destination-unreachable, echo-request, time-exceeded, parameter-problem } accept
+
+        # strongswan/kernel: allow incoming IKE & UDP encapsulated ESP
+        udp dport 4500 accept
+
+        # Log everything else
+        log prefix "INPUT PUBLIC (drop): " drop
+    }
+
+    # Traffic received over an IPsec tunnel
+    chain input_ipsec {
+        # DEBUG
+        # log prefix "INPUT IPSEC: "
+
+        # Accept currently established connections
+        ct state established,related accept
+
+        # ICMP whitelist
+        ip protocol icmp icmp type { destination-unreachable, echo-request, time-exceeded, parameter-problem } accept
+
+        # Allow incoming HTTPS (update server)
+        tcp dport { 443 } accept
+
+        # Log everything else
+        log prefix "INPUT IPSEC (drop): " drop
+    }
+
+    # Do not filter forward for now
+    chain forward {
+        type filter hook forward priority 0; policy accept;
+        log prefix "FORWARD (accept): "
+    }
+
+    # Main chain to filter output traffic
+    chain output {
+        # Drop everything by default
+        type filter hook output priority 0; policy drop;
+
+        # Drop invalid connections
+        ct state invalid drop
+
+        # Match loopback traffic
+        oif lo jump output_lo
+
+        # Vagrant-libvirt management interface
+        oifname $libvirt_iface jump output_libvirt
+
+        # Internet exposed interface, public traffic
+        oifname $public_iface ip saddr $public_ip jump output_public
+
+        # Internet exposed interface, IPsec only traffic
+        # oifname $public_iface rt ipsec exists jump output_ipsec
+        # Workaround as Debian does not have CONFIG_NFT_XFRM=y yet
+        oifname $public_iface ip saddr $private_net jump output_ipsec
+
+        # Log everything else
+        log prefix "OUTPUT (reject): "
+
+        # Reject everything else
+        reject with icmp type port-unreachable
+    }
+
+    # Loopback
+    chain output_lo {
+        # Do not filter localhost for now
+        accept
+    }
+
+    # Vagrant-libvirt management interface
+    chain output_libvirt {
+        # Do not apply any filter on management interface
+        accept
+    }
+
+    # Internet outgoing traffic
+    chain output_public {
+        # DEBUG
+        # log prefix "OUTPUT PUBLIC: "
+
+        # Accept currently established connections
+        ct state established accept
+
+        # ICMP whitelist
+        ip protocol icmp icmp type { echo-reply, destination-unreachable, echo-request, time-exceeded, parameter-problem } accept
+
+        # strongswan/kernel: allow outgoing IKE & UDP encapsulated ESP
+        udp dport 4500 meta skuid { "root", "ipsec" } accept
+
+        # *: allow outgoing DNS
+        # Can not filter on systemd-resolved as it is unused
+        # tcp dport 53 meta skuid "systemd-resolve" accept
+        # udp dport 53 meta skuid "systemd-resolve" accept
+        tcp dport 53 accept
+        udp dport 53 accept
+
+        # apt: allow outgoing HTTP & HTTPS
+        tcp dport { 80, 443 } meta skuid "_apt" accept
+
+        # systemd-timesyncd: allow outgoing NTP
+        udp dport 123 meta skuid "systemd-timesync" accept
+
+        # Log everything else
+        log prefix "OUTPUT PUBLIC (drop): " drop
+    }
+
+    # Traffic that will be send over an IPsec tunnel
+    chain output_ipsec {
+        # DEBUG
+        # log prefix "OUTPUT IPSEC: "
+
+        # Accept currently established connections
+        ct state established,related accept
+
+        # ICMP whitelist
+        ip protocol icmp icmp type { destination-unreachable, echo-request, time-exceeded, parameter-problem } accept
+
+        # Allow outgoing SSH to CLIP OS clients
+        tcp dport { 22 } meta skuid != "root"  accept
+
+        # Log everything else
+        log prefix "OUTPUT IPSEC (drop): " drop
+    }
+}
+
+# Silently drop all IPv6 traffic
+table ip6 filter {
+    chain input {
+        type filter hook input priority 0; policy drop;
+        # log prefix "INPUT IPv6 (drop): " drop
+    }
+    chain forward {
+        type filter hook forward priority 0; policy drop;
+        # log prefix "FORWARD IPv6 (drop): " drop
+    }
+    chain output {
+        type filter hook output priority 0; policy drop;
+        # log prefix "FORWARD IPv6 (drop): " drop
+    }
+}

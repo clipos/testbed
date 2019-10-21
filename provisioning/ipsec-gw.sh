@@ -34,6 +34,12 @@ done
 echo " [*] Restart nginx service..."
 systemctl restart nginx.service
 
+echo " [*] Install nftables rules..."
+install -v -o 0 -g 0 -m 0600 "/vagrant/nft/apply.nft" "/etc/nftables.conf"
+
+echo " [*] Enable nftables..."
+systemctl enable --now nftables.service
+
 echo " [*] Done"
 
 # vim: set ts=4 sts=4 sw=4 et ft=sh:
