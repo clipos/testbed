@@ -26,8 +26,10 @@ systemctl restart strongswan-swanctl.service
 echo " [*] Setup hostname in /etc/hosts..."
 echo "127.0.0.1 ipsec-gw" >> /etc/hosts
 
-echo " [*] Setup nginx configuration for updates..."
-ln -s /vagrant/https/update.clip-os.org.conf /etc/nginx/conf.d/update.clip-os.org.conf
+echo " [*] Install nginx configuration for updates..."
+for f in "update.clip-os.org.conf" "update.clip-os.org-key.pem" "update.clip-os.org.pem"; do
+    install -v -o 0 -g 0 -m 0644 "/vagrant/https/${f}" "/etc/nginx/conf.d/${f}"
+done
 
 echo " [*] Restart nginx service..."
 systemctl restart nginx
