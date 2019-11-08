@@ -41,6 +41,9 @@ install -v -o 0 -g 0 -m 0644 \
     /etc/systemd/system/sshd-keygen.service
 systemctl add-wants ssh.service sshd-keygen.service
 
+# Cleanup
+rm -f /vagrant/sshd-keygen.service
+
 sync
 
 # vim: set ts=4 sts=4 sw=4 et ft=sh:
