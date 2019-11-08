@@ -37,10 +37,10 @@ Vagrant.configure("2") do |config|
       libvirt.video_type = "qxl"
     end
 
-    # Expose the "/vagrant" synced folder with 9p/virtio in passthrough mode
-    # (rather than the default NFS method):
+    # Expose the "/vagrant" synced folder with 9p/virtio in mapped mode (rather
+    # than the default NFS method):
     ipsecgw.vm.synced_folder "./synced_folders/ipsec-gw", "/vagrant",
-      type: "9p", accessmode: "passthrough", mount: true
+      type: "9p", accessmode: "mapped", mount: true
 
     # Provisioning:
     ipsecgw.vm.provision "shell", path: "provisioning/ipsec-gw.sh"
