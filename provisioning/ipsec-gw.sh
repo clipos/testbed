@@ -20,8 +20,48 @@ install -v -o 0 -g 0 -m 0600 "/vagrant/pki/server.key.pem"   "/etc/swanctl/priva
 echo " [*] Install the dummy IPsec PKI..."
 install -v -o 0 -g 0 -m 0644 "/vagrant/office_net.conf"      "/etc/swanctl/conf.d/office_net.conf"
 
-echo " [*] Restart strongswan-swanctl service..."
-systemctl restart strongswan-swanctl.service
+echo " [*] Create strongSwan user..."
+install -v -o 0 -g 0 -m 755 -d "/etc/sysusers.d"
+install -v -o 0 -g 0 -m 644 "/vagrant/strongswan/sysusers.conf" "/etc/sysusers.d/strongswan.conf"
+systemd-sysusers strongswan.conf
+
+echo " [*] Install strongSwan unit drop-in..."
+install -v -o 0 -g 0 -m 755 -d "/etc/systemd/system/strongswan.service.d"
+install -v -o 0 -g 0 -m 644 "/vagrant/strongswan/security.conf" \
+    "/etc/systemd/system/strongswan.service.d/security.conf"
+
+echo " [*] Update strongSwan configuration..."
+sed -i \
+    's|# socket = unix://${piddir}/|socket = unix:///run/ipsec/|g' \
+    "/etc/strongswan.d/swanctl.conf" \
+    "/etc/strongswan.d/charon/vici.conf"
+chown -R root:ipsec \
+    "/etc/strongswan.conf" \
+    "/etc/strongswan.d" \
+    "/etc/swanctl"
+chmod -R ug+rX \
+    "/etc/strongswan.conf" \
+    "/etc/strongswan.d" \
+    "/etc/swanctl"
+plugins=(
+    "aesni.conf" "agent.conf" "bypass-lan.conf" "connmark.conf" "counters.conf"
+    "dnskey.conf" "eap-mschapv2.conf" "fips-prf.conf" "gcm.conf" "gmp.conf"
+    "md5.conf" "mgf1.conf" "pgp.conf" "rc2.conf" "sha1.conf" "sshkey.conf"
+    "xauth-generic.conf" "xcbc.conf"
+)
+for p in "${plugins[@]}"; do
+    sed -i 's/load = yes/# load = yes/g' "/etc/strongswan.d/charon/${p}"
+done
+
+echo " [*] Install nftables rules..."
+install -v -o 0 -g 0 -m 0600 "/vagrant/nft/apply.nft" "/etc/nftables.conf"
+
+echo " [*] Enable nftables..."
+systemctl enable --now nftables.service
+
+echo " [*] Restart strongSwan service..."
+systemctl daemon-reload
+systemctl restart strongswan.service
 
 echo " [*] Setup hostname in /etc/hosts..."
 echo "127.0.0.1 ipsec-gw" >> /etc/hosts
@@ -33,12 +73,6 @@ done
 
 echo " [*] Restart nginx service..."
 systemctl restart nginx.service
-
-echo " [*] Install nftables rules..."
-install -v -o 0 -g 0 -m 0600 "/vagrant/nft/apply.nft" "/etc/nftables.conf"
-
-echo " [*] Enable nftables..."
-systemctl enable --now nftables.service
 
 echo " [*] Done"
 
