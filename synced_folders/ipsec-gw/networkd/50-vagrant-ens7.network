@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# Copyright © 2019 ANSSI. All rights reserved.
+
 [Match]
 Name=ens7
 
@@ -10,6 +13,10 @@ DNS=172.27.1.1
 
 # IPsec tunnel address
 Address=172.27.100.10/24
+
+# IPv4 only
+LinkLocalAddressing=no
+IPv6AcceptRA=no
 
 [Route]
 Gateway=172.27.1.1
