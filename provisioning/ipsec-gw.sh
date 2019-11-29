@@ -28,11 +28,11 @@ echo "127.0.0.1 ipsec-gw" >> /etc/hosts
 
 echo " [*] Install nginx configuration for updates..."
 for f in "update.clip-os.org.conf" "update.clip-os.org-key.pem" "update.clip-os.org.pem"; do
-    install -v -o 0 -g 0 -m 0644 "/vagrant/https/${f}" "/etc/nginx/conf.d/${f}"
+    install -v -o 0 -g 0 -m 0644 "/vagrant/nginx/${f}" "/etc/nginx/conf.d/${f}"
 done
 
 echo " [*] Restart nginx service..."
-systemctl restart nginx
+systemctl restart nginx.service
 
 echo " [*] Done"
 
