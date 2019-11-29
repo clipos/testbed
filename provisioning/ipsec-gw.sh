@@ -18,7 +18,7 @@ install -v -o 0 -g 0 -m 0644 "/vagrant/pki/server.cert.pem"  "/etc/swanctl/x509/
 install -v -o 0 -g 0 -m 0600 "/vagrant/pki/server.key.pem"   "/etc/swanctl/private/server.key.pem"
 
 echo " [*] Install the dummy IPsec PKI..."
-install -v -o 0 -g 0 -m 0644 "/vagrant/office_net.conf"      "/etc/swanctl/conf.d/office_net.conf"
+install -v -o 0 -g 0 -m 0644 "/vagrant/strongswan/office_net.conf" "/etc/swanctl/conf.d/office_net.conf"
 
 echo " [*] Create strongSwan user..."
 install -v -o 0 -g 0 -m 755 -d "/etc/sysusers.d"
