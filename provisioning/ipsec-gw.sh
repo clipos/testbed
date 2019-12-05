@@ -55,15 +55,15 @@ done
 
 echo " [*] Install nftables rules..."
 install -v -o 0 -g 0 -m 0600 "/vagrant/nft/apply.nft" "/etc/nftables.conf"
+install -v -o 0 -g 0 -m 0600 "/vagrant/nft.ipsec0/rules.nft" "/etc/nftables.ipsec0.conf"
 
 echo " [*] Enable nftables..."
 systemctl enable --now nftables.service
 
-echo " [*] Install XFRM interface unit..."
-install -v -o 0 -g 0 -m 644 "/vagrant/strongswan/xfrm-ipsec0@.service" \
-    "/etc/systemd/system/xfrm-ipsec0@.service"
+echo " [*] Install Network namespace & XFRM interface unit..."
+install -v -o 0 -g 0 -m 644 "/vagrant/strongswan/netns@.service" "/etc/systemd/system/netns@.service"
 systemctl daemon-reload
-systemctl enable --now xfrm-ipsec0@ens7.service
+systemctl enable --now netns@ipsec0.service
 
 echo " [*] Restart strongSwan service..."
 systemctl daemon-reload

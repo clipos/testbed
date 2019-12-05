@@ -5,12 +5,8 @@
 # Flush all rules
 flush ruleset
 
-# vagrant-libvirt management interface
-define libvirt_iface = "ens6"
-
-# Public network interface
-define public_iface =  "ens7"
-define public_ip =     172.27.1.10
+# IPsec interface
+define private_iface = "ipsec0"
 
 # Warning: Filter only IPv4. IPv6 is dropped by default at the end.
 table ip filter {
@@ -25,11 +21,8 @@ table ip filter {
         # Match loopback traffic
         iif lo jump input_lo
 
-        # Vagrant-libvirt management interface
-        iifname $libvirt_iface jump input_libvirt
-
-        # Internet exposed interface
-        iifname $public_iface ip daddr $public_ip jump input_public
+        # IPsec traffic
+        iifname $private_iface jump input_ipsec
 
         # Log everything else
         log prefix "INPUT (reject): "
@@ -44,16 +37,10 @@ table ip filter {
         accept
     }
 
-    # Vagrant-libvirt management interface
-    chain input_libvirt {
-        # Do not apply any filter on management interface
-        accept
-    }
-
-    # Internet incoming traffic
-    chain input_public {
+    # Traffic received over an IPsec tunnel
+    chain input_ipsec {
         # DEBUG
-        # log prefix "INPUT PUBLIC: "
+        # log prefix "INPUT IPSEC: "
 
         # Accept currently established connections
         ct state established accept
@@ -61,17 +48,17 @@ table ip filter {
         # ICMP whitelist
         ip protocol icmp icmp type { echo-reply, destination-unreachable, echo-request, time-exceeded, parameter-problem } accept
 
-        # strongswan/kernel: allow incoming IKE & UDP encapsulated ESP
-        udp dport 4500 accept
+        # Allow incoming HTTPS (update server)
+        tcp dport { 443 } accept
 
         # Log everything else
-        log prefix "INPUT PUBLIC (drop): " drop
+        log prefix "INPUT IPSEC (drop): " drop
     }
 
-    # Do not filter forward for now
+    # Do not forward traffic
     chain forward {
-        type filter hook forward priority 0; policy accept;
-        log prefix "FORWARD (accept): "
+        type filter hook forward priority 0; policy drop;
+        # log prefix "FORWARD (drop): " drop
     }
 
     # Main chain to filter output traffic
@@ -85,11 +72,8 @@ table ip filter {
         # Match loopback traffic
         oif lo jump output_lo
 
-        # Vagrant-libvirt management interface
-        oifname $libvirt_iface jump output_libvirt
-
-        # Internet exposed interface
-        oifname $public_iface ip saddr $public_ip jump output_public
+        # IPsec only traffic
+        oifname $private_iface jump output_ipsec
 
         # Log everything else
         log prefix "OUTPUT (reject): "
@@ -104,16 +88,10 @@ table ip filter {
         accept
     }
 
-    # Vagrant-libvirt management interface
-    chain output_libvirt {
-        # Do not apply any filter on management interface
-        accept
-    }
-
-    # Internet outgoing traffic
-    chain output_public {
+    # Traffic that will be send over an IPsec tunnel
+    chain output_ipsec {
         # DEBUG
-        # log prefix "OUTPUT PUBLIC: "
+        # log prefix "OUTPUT IPSEC: "
 
         # Accept currently established connections
         ct state established accept
@@ -121,24 +99,11 @@ table ip filter {
         # ICMP whitelist
         ip protocol icmp icmp type { echo-reply, destination-unreachable, echo-request, time-exceeded, parameter-problem } accept
 
-        # strongswan/kernel: allow outgoing IKE & UDP encapsulated ESP
-        udp dport 4500 meta skuid { "root", "ipsec" } accept
-
-        # *: allow outgoing DNS
-        # Can not filter on systemd-resolved as it is unused
-        # tcp dport 53 meta skuid "systemd-resolve" accept
-        # udp dport 53 meta skuid "systemd-resolve" accept
-        tcp dport 53 accept
-        udp dport 53 accept
-
-        # apt: allow outgoing HTTP & HTTPS
-        tcp dport { 80, 443 } meta skuid "_apt" accept
-
-        # systemd-timesyncd: allow outgoing NTP
-        udp dport 123 meta skuid "systemd-timesync" accept
+        # Allow outgoing SSH to CLIP OS clients
+        tcp dport { 22 } meta skuid != "root"  accept
 
         # Log everything else
-        log prefix "OUTPUT PUBLIC (drop): " drop
+        log prefix "OUTPUT IPSEC (drop): " drop
     }
 }
 

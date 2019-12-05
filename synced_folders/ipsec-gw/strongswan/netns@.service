@@ -1,0 +1,30 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+# Copyright © 2019 ANSSI. All rights reserved.
+
+[Unit]
+Description=Setup '%i' network namespace and XFRM interface bound to ens7
+Wants=network.target sys-subsystem-net-devices-ens7.device
+After=network.target sys-subsystem-net-devices-ens7.device
+Before=strongswan.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+
+ExecStart=/usr/sbin/ip link add %i type xfrm dev ens7 if_id "0x01"
+ExecStart=/usr/sbin/ip netns add %i
+ExecStart=/usr/sbin/ip link set %i netns %i
+ExecStart=/usr/sbin/ip netns exec %i nft -f /etc/nftables.%i.conf
+ExecStart=/usr/sbin/ip netns exec %i ip link set lo up
+ExecStart=/usr/sbin/ip netns exec %i ip addr add 172.27.100.10/24 dev %i
+ExecStart=/usr/sbin/ip netns exec %i ip link set %i up
+
+ExecStop=/usr/sbin/ip netns exec %i ip link set %i down
+ExecStop=/usr/sbin/ip netns exec %i ip addr delete 172.27.100.10/24 dev %i
+ExecStop=/usr/sbin/ip netns exec %i ip link set lo up
+ExecStop=/usr/sbin/ip netns exec %i nft flush ruleset
+ExecStop=/usr/sbin/ip netns exec %i link delete dev %i
+ExecStop=/usr/sbin/ip netns delete %i
+
+[Install]
+RequiredBy=strongswan.service
