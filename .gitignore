@@ -3,3 +3,6 @@
 
 # Updates
 synced_folders/ipsec-gw/update/
+
+# Temporary folder to store generated QEMU images
+/run
