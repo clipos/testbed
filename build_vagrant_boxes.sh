@@ -18,7 +18,7 @@ main() {
         echo "[+] Building '${box}' box..."
 
         # Clean up
-        vagrant destroy "${box}" || true
+        vagrant destroy --force "${box}" || true
 
         rm -rf '_tmp_package'
         vagrant up "${box}"
@@ -28,23 +28,23 @@ main() {
         vagrant ssh -c 'sudo poweroff' "${box}" || true
         sleep 5
 
-        # Unfortunately we have to ask the user to manually give us access to
-        # the image disk as libvirt will restore root as owner on shutdown.
-        echo "[*] Please run 'sudo chmod a+r path/to/build_clipos-testbed_${box}.img'"
-        echo ""
-        read -p "[*] -->> Waiting for user confirmation (press enter here) <<-- "
+        # Unfortunately we have to manually give us access to the image disk as
+        # libvirt will restore root as owner on shutdown.
+        readonly boxname="build_clipos-testbed_${box}"
+        readonly cmd="virsh --connect qemu:///system domblklist ${boxname}"
+        readonly image="$(${cmd} | grep "vda" | awk '{print $2}')"
+        echo "[!] Warning: Giving everyone read access to '${image}'"
+        sudo chmod a+r "${image}"
 
         echo "[+] Packaging the '${box}' box..."
-        vagrant package --output 'ipsec-gw.box' "${box}"
+        vagrant package --output "${box}.box" "${box}"
 
         echo "[+] Importing the '${box}' box..."
-        vagrant box add --force \
-            --name 'clipos-testbed/ipsec-gw' \
-            'ipsec-gw.box'
+        vagrant box add --force --name "clipos-testbed/${box}" "${box}.box"
 
         echo "[+] Cleaning up the '${box}' box..."
-        rm 'ipsec-gw.box'
-        vagrant destroy
+        rm "${box}.box"
+        vagrant destroy --force "${box}" || true
     done
 
     popd > /dev/null
