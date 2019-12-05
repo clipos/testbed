@@ -59,6 +59,12 @@ install -v -o 0 -g 0 -m 0600 "/vagrant/nft/apply.nft" "/etc/nftables.conf"
 echo " [*] Enable nftables..."
 systemctl enable --now nftables.service
 
+echo " [*] Install XFRM interface unit..."
+install -v -o 0 -g 0 -m 644 "/vagrant/strongswan/xfrm-ipsec0@.service" \
+    "/etc/systemd/system/xfrm-ipsec0@.service"
+systemctl daemon-reload
+systemctl enable --now xfrm-ipsec0@ens7.service
+
 echo " [*] Restart strongSwan service..."
 systemctl daemon-reload
 systemctl restart strongswan.service
@@ -71,7 +77,13 @@ for f in "update.clip-os.org.conf" "update.clip-os.org-key.pem" "update.clip-os.
     install -v -o 0 -g 0 -m 0644 "/vagrant/nginx/${f}" "/etc/nginx/conf.d/${f}"
 done
 
+echo " [*] Install nginx unit drop-in..."
+install -v -o 0 -g 0 -m 755 -d "/etc/systemd/system/nginx.service.d"
+install -v -o 0 -g 0 -m 644 "/vagrant/ipsec0.conf" \
+    "/etc/systemd/system/nginx.service.d/ipsec0.conf"
+
 echo " [*] Restart nginx service..."
+systemctl daemon-reload
 systemctl restart nginx.service
 
 echo " [*] Done"

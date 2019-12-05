@@ -12,8 +12,10 @@ define libvirt_iface = "ens6"
 define public_iface =  "ens7"
 define public_ip =     172.27.1.10
 
-# IP address and range for private network available only over an IPsec tunnel.
+# Intreface, IP address and range for private network available only over an
+# IPsec tunnel.
 # This is specific to each deployment.
+define private_iface = "ipsec0"
 define private_ip =    172.27.100.10
 define private_net =   172.27.100.0/24
 
@@ -33,13 +35,11 @@ table ip filter {
         # Vagrant-libvirt management interface
         iifname $libvirt_iface jump input_libvirt
 
-        # Internet exposed interface, public traffic
+        # Internet exposed interface
         iifname $public_iface ip daddr $public_ip jump input_public
 
-        # Internet exposed interface, IPsec only traffic
-        # iifname $public_iface rt ipsec exists jump input_ipsec
-        # Workaround as Debian does not have CONFIG_NFT_XFRM=y yet
-        iifname $public_iface ip daddr $private_net jump input_ipsec
+        # IPsec traffic
+        iifname $private_iface jump input_ipsec
 
         # Log everything else
         log prefix "INPUT (reject): "
@@ -116,13 +116,11 @@ table ip filter {
         # Vagrant-libvirt management interface
         oifname $libvirt_iface jump output_libvirt
 
-        # Internet exposed interface, public traffic
+        # Internet exposed interface
         oifname $public_iface ip saddr $public_ip jump output_public
 
-        # Internet exposed interface, IPsec only traffic
-        # oifname $public_iface rt ipsec exists jump output_ipsec
-        # Workaround as Debian does not have CONFIG_NFT_XFRM=y yet
-        oifname $public_iface ip saddr $private_net jump output_ipsec
+        # IPsec only traffic
+        oifname $private_iface jump output_ipsec
 
         # Log everything else
         log prefix "OUTPUT (reject): "

@@ -11,9 +11,6 @@ DHCP=no
 Address=172.27.1.10/24
 DNS=172.27.1.1
 
-# IPsec tunnel address
-Address=172.27.100.10/24
-
 # IPv4 only
 LinkLocalAddressing=no
 IPv6AcceptRA=no
