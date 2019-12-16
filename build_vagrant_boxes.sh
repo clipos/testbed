@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 # Copyright © 2019 ANSSI. All rights reserved.
 
-set -eu -o pipefail
+# Safety settings: do not remove!
+set -o errexit -o nounset -o pipefail
 
 # Do not run as root
 if [[ "${EUID}" == 0 ]]; then
@@ -10,10 +11,14 @@ if [[ "${EUID}" == 0 ]]; then
     exit 1
 fi
 
+# Get the basename of this program and the directory path to itself:
+readonly PROGNAME="${BASH_SOURCE[0]##*/}"
+readonly PROGPATH="$(realpath "${BASH_SOURCE[0]%/*}")"
+
 main() {
     echo "[+] Building Vagrant boxes..."
 
-    pushd boxes > /dev/null
+    pushd "${PROGPATH}/boxes" > /dev/null
 
     # Boxes to build:
     local -r boxes=(
