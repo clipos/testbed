@@ -4,6 +4,12 @@
 
 set -eu -o pipefail
 
+# Do not run as root
+if [[ "${EUID}" == 0 ]]; then
+    >&2 echo "[*] Do not run as root!"
+    exit 1
+fi
+
 main() {
     echo "[+] Building Vagrant boxes..."
 
