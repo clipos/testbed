@@ -27,12 +27,10 @@ main() {
             >&2 echo "[!] Could not find \"cosmk\". Aborting."
             exit 1
         fi
-        # TODO: Read this from repo root config.toml (not yet implemented)
-        local -r product="clipos"
 
-        local -r repo_root="$(cosmk repo-root-path)"
-        local -r version="$(cosmk product-version ${product})"
-        local -r current="${repo_root}/out/${product}/${version}"
+        local -r product="$(cosmk product-name)"
+        local -r version="$(cosmk product-version)"
+        local -r current="../out/${product}/${version}"
 
         local -r core="${current}/core/bundle/core.squashfs.verity.bundled"
         local -r efiboot="${current}/efiboot/bundle/efipartition.tar"
@@ -41,8 +39,7 @@ main() {
         local -r vg_name="mainvg"
         local -r core_lv_name="core_${version}"
 
-        local -r out="${repo_root}/out/${product}/${version}/qemu/bundle"
-        local -r cache="${repo_root}/cache/${product}/${version}/qemu/bundle"
+        local -r output="../run/virtual_machines"
     else
         if [[ "${#}" -ne 5 ]]; then
             >&2 echo "[!] Invalid number of arguments!"
@@ -59,8 +56,7 @@ main() {
         local -r vg_name="mainvg"
         local -r core_lv_prefix="core_${version}"
 
-        local -r out="${PROGPATH}/run"
-        local -r cache="${PROGPATH}/run"
+        local -r output="${PROGPATH}/run"
     fi
 
     # Check for KVM availability and permission access
@@ -78,8 +74,9 @@ main() {
     # Make sure we operate from the root of the testbed repository
     cd "${PROGPATH}"
 
-    local -r empty_disk_image="${cache}/empty.qcow2"
-    local -r core_state_keyfile="${cache}/core_state.keyfile"
+    local -r empty_disk_image="${output}/empty.qcow2"
+    local -r core_state_keyfile="${output}/core_state.keyfile"
+    mkdir -p "${output}"
 
     # Re-use cached empty disk image if available
     if [[ ! -f "${empty_disk_image}" ]] || [[ ! -f "${core_state_keyfile}" ]]; then
@@ -98,7 +95,7 @@ main() {
         echo "[!] Re-using cached empty QEMU disk image!"
     fi
 
-    local -r final_disk_image="${out}/main.qcow2"
+    local -r final_disk_image="${output}/main.qcow2"
 
     # Work on a copy of the cached empty disk image
     cp "${empty_disk_image}" "${final_disk_image}"
@@ -110,6 +107,8 @@ main() {
     # Install core_state initial content
     ./qemu/52_insert_fs_tar.sh "${final_disk_image}" "${vg_name}" \
         "${core_state_keyfile}" "${core_state}" core_state
+
+    echo "[*] Done!"
 }
 
 main "${@}"
