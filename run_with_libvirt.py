@@ -30,6 +30,7 @@ except KeyError:
     # environment, proceed silently (even if this is strange...)
     pass
 
+import argparse
 import libvirt
 import shutil
 import signal
@@ -43,9 +44,13 @@ def main():
         print("Do not run as root!")
         sys.exit(1)
 
-    # FIXME
-    product_name = "clipos"
-    product_version = "5.0.0-beta.3"
+    parser = argparse.ArgumentParser(description='Run a CLIP OS VM in a libvirt based testbed.')
+    parser.add_argument('product', metavar='name', help='Product name')
+    parser.add_argument('version', metavar='version', help='Product version')
+
+    args = parser.parse_args()
+    product_name = args.product
+    product_version = args.version
 
     libvirt_template = os.path.join(repo_root_path(), "testbed", "qemu", "clipos-qemu.xml")
     spawn_virtmanager = False
