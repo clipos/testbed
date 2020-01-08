@@ -18,7 +18,7 @@ readonly PROGPATH="$(realpath "${BASH_SOURCE[0]%/*}")"
 # Default LUKS passphrase for the Core State partition.
 # WARNING: This is suitable only to create test QEMU virtual machine images and
 # MUST NOT BE USED to install production systems.
-readonly CORE_STATE_KEY="core_state_key"
+readonly CORE_STATE_KEY="clipos"
 
 main() {
     # Are we running in a full CLIP OS project clone or standalone?
