@@ -4,34 +4,9 @@
 
 """Start a CLIP OS virtual machine for testing in the testbed environment."""
 
-import os
-
-# Make sure that we are not running inside a virtual environment.
-try:
-    if os.environ["VIRTUAL_ENV"]:
-        # Retrieve path to the virtualenv and all the items composing PATH:
-        venv_path = os.environ["VIRTUAL_ENV"]
-        path_items = os.environ["PATH"].split(":")
-        new_path_items = path_items[:] # copy object to receive changes
-
-        # Iterate on the PATH items and strip all items beginning by the
-        # virtualenv path (using canonical paths):
-        for path_component in path_items:
-            if os.path.realpath(path_component).startswith(
-                    os.path.realpath(venv_path)):
-                new_path_items.remove(path_component)
-
-        # Unset VIRTUAL_ENV and set new PATH (with virtualenv binaries path
-        # stripped):
-        del os.environ["VIRTUAL_ENV"]
-        os.environ['PATH'] = ':'.join(new_path_items)
-except KeyError:
-    # if we land here, then either PATH or VIRTUAL_ENV is missing in the
-    # environment, proceed silently (even if this is strange...)
-    pass
-
 import argparse
 import libvirt
+import os
 import shutil
 import signal
 import subprocess
