@@ -12,8 +12,16 @@ if [[ "${EUID}" == 0 ]]; then
 fi
 
 main() {
-    # Figure out current and next version
-    local current_version="$(grep "version = " ../products/clipos/properties.toml | cut -f3 -d\ | sed 's|"||g')"
+    if [[ -z "$(command -v cosmk)" ]]; then
+        >&2 echo "[!] Could not find \"cosmk\". Aborting."
+        exit 1
+    fi
+
+    local -r repo_root="$(cosmk repo-root-path)"
+    local -r product="$(cosmk product-name)"
+    local -r current_version="$(cosmk product-version)"
+
+    # Figure out current and next minor version
     local minor_version="${current_version##*.}"
     local next_version=$((minor_version+1))
     next_version="${current_version/%${minor_version}/${next_version}}"
@@ -23,20 +31,20 @@ main() {
     echo "[+] Setting up nginx webroot..."
     local webroot="synced_folders/ipsec-gw/update/"
     local dist="${webroot}/dist/${next_version}"
-    mkdir -p "${webroot}/update/v1/clipos"
+    mkdir -p "${webroot}/update/v1/${product}"
     mkdir -p "${dist}"
-    echo "version = \"${next_version}\"" > "${webroot}/update/v1/clipos/version"
+    echo "version = \"${next_version}\"" > "${webroot}/update/v1/${product}/version"
 
-    # Copy clipos-core & clipos-efiboot
-    echo "[+] Getting new clipos-core & clipos-efiboot..."
-    local out="../out/clipos/${current_version}"
-    cp "${out}/core/bundle/core.next.squashfs.verity.bundled" "${dist}/clipos-core"
-    cp "${out}/efiboot/configure/linux.next.efi" "${dist}/clipos-efiboot"
+    # Copy ${product}-core & ${product}-efiboot
+    echo "[+] Getting new ${product}-core & ${product}-efiboot..."
+    local out="../out/${product}/${current_version}"
+    cp "${out}/core/bundle/core.next.squashfs.verity.bundled" "${dist}/${product}-core"
+    cp "${out}/efiboot/configure/linux.next.efi" "${dist}/${product}-efiboot"
 
-    echo "[+] Signing clipos-core & clipos-efiboot..."
+    echo "[+] Signing ${product}-core & ${product}-efiboot..."
     local pubkey="../src/platform/updater/test/keys/pub"
     local privkey="../src/platform/updater/test/keys/priv"
-    for f in "clipos-core" "clipos-efiboot"; do
+    for f in "${product}-core" "${product}-efiboot"; do
         echo "" | rsign sign \
             "${dist}/${f}" \
             -p "${pubkey}" \
