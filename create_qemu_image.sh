@@ -63,6 +63,18 @@ main() {
         local -r cache="${PROGPATH}/run"
     fi
 
+    # Check for KVM availability and permission access
+    if [[ ! -r "/dev/kvm" ]] || [[ ! -w "/dev/kvm" ]]; then
+        # We could not find the KVM device or we do not have access to it
+        # Force TCG backend to use QEMU without KVM support
+        # See http://libguestfs.org/guestfs.3.html#backend-settings
+        >&2 echo "[!] No support or access to KVM found. Running with TCG accel"
+        export LIBGUESTFS_BACKEND_SETTINGS=force_tcg
+    fi
+
+    # Enable debug options for libguestfs
+    # export LIBGUESTFS_DEBUG=1 LIBGUESTFS_TRACE=1
+
     # Make sure we operate from the root of the testbed repository
     cd "${PROGPATH}"
 
