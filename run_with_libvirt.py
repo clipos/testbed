@@ -60,8 +60,7 @@ def main():
     ovmf_vars_template = os.path.join(repo_root_path(), "out", product_name,
                              product_version, "efiboot", "bundle", "qemu-ovmf",
                              "OVMF_VARS.fd")
-    qcow2_image = os.path.join(repo_root_path(), "out", product_name,
-                               product_version, "qemu", "bundle", "main.qcow2")
+    qcow2_image = os.path.join(repo_root_path(), "run", "virtual_machines", "main.qcow2")
 
     # Name used for libvirt domain. This name must not include any '+' sign as
     # when doing TPM emulation, libvirt passes the guest name to swtpm, which
