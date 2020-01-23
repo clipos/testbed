@@ -61,6 +61,6 @@ ${luks_key}
 
 mkfs ext4 /dev/mapper/core_state
 _EOF_
-echo "${IMAGE}: Setting up DM-Crypt+Integrity for ${LV_NAME}: OK"
+echo "${IMAGE}: Creating ext4 filesystem in ${LV_NAME}: OK"
 
 # vim: set ts=4 sts=4 sw=4 et ft=sh:
