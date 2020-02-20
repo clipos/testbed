@@ -33,6 +33,7 @@ main() {
 
         rm -rf '_tmp_package'
         vagrant up "${box}"
+        sleep 5
 
         # Until https://github.com/vagrant-libvirt/vagrant-libvirt/pull/1034 is
         # merged, we have to wait for the VM to shutdown before packaging it.
@@ -41,9 +42,9 @@ main() {
 
         # Unfortunately we have to manually give us access to the image disk as
         # libvirt will restore root as owner on shutdown.
-        readonly boxname="build_clipos-testbed_${box}"
-        readonly cmd="virsh --connect qemu:///system domblklist ${boxname}"
-        readonly image="$(${cmd} | grep "vda" | awk '{print $2}')"
+        local boxname="build_clipos-testbed_${box}"
+        local cmd="virsh --connect qemu:///system domblklist ${boxname}"
+        local image="$(${cmd} | grep "vda" | awk '{print $2}')"
         echo "[!] Warning: Giving everyone read access to '${image}'"
         sudo chmod a+r "${image}"
 
