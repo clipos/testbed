@@ -1,0 +1,42 @@
+[Unit]
+Description=chrony-ipsec, ipsec side chrony connection
+Documentation=man:chronyd(8) man:chronyc(1) man:chrony.conf(5)
+Conflicts=systemd-timesyncd.service openntpd.service ntp.service ntpsec.service
+Wants=time-sync.target
+Before=time-sync.target
+After=network.target
+ConditionCapability=CAP_SYS_TIME
+
+[Service]
+Type=forking
+PIDFile=/run/chrony-ipsec/chrony-ipsec.pid
+NoNewPrivileges=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+
+PrivateTmp=yes
+PrivateDevices=yes
+
+ProtectSystem=full
+ProtectHome=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+
+SystemCallArchitectures=native
+SystemCallFilter=@system-service @clock
+SystemCallErrorNumber=EPERM
+
+AmbientCapabilities=CAP_NET_BIND_SERVICE CAP_SETGID CAP_SETUID CAP_DAC_READ_SEARCH CAP_DAC_OVERRIDE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE CAP_SETGID CAP_SETUID CAP_DAC_READ_SEARCH CAP_DAC_OVERRIDE
+
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictAddressFamilies=AF_UNIX AF_NETLINK AF_INET AF_INET6
+
+EnvironmentFile=-/etc/default/chrony
+ExecStart=/usr/sbin/chronyd $DAEMON_OPTS -f /etc/chrony/chrony-ipsec.conf -x
+ExecStartPost=-/usr/lib/chrony/chrony-helper update-daemon
+
+[Install]
+Alias=chronyd-ipsec.service
+WantedBy=multi-user.target

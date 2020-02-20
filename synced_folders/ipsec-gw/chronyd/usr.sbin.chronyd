@@ -1,0 +1,9 @@
+capability dac_read_search,
+capability dac_override,
+
+/{,var/}run/chrony-ipsec.pid w,
+/{,var/}run/chrony-ipsec/{,*} rw,
+/var/lib/chrony-ipsec/{,*} r,
+/var/lib/chrony-ipsec/* w,
+/var/log/chrony-ipsec/{,*} r,
+/var/log/chrony-ipsec/* w,

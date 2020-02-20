@@ -30,7 +30,8 @@ apt-get -y -q dist-upgrade
 apt-get -y -q install \
     charon-systemd \
     nftables \
-    nginx
+    nginx \
+    chrony
 
 echo " [*] Install the dummy IPsec PKI..."
 install -v -o 0 -g 0 -m 0644 "/vagrant/pki/root-ca.cert.pem" "/etc/swanctl/x509ca/root-ca.cert.pem"
@@ -88,6 +89,32 @@ systemctl enable --now netns@ipsec0.service
 echo " [*] Restart strongSwan service..."
 systemctl daemon-reload
 systemctl restart strongswan.service
+
+echo " [*] Create chrony-ipsec user..."
+install -v -o 0 -g 0 -m 644 "/vagrant/chronyd/sysusers.conf" "/etc/sysusers.d/chrony.conf"
+systemd-sysusers chrony.conf
+
+install -v -o 0 -g 0 -m 0644 "/vagrant/chronyd/chrony.conf" "/etc/chrony/chrony.conf"
+install -v -o 0 -g 0 -m 0644 "/vagrant/chronyd/chrony-ipsec.keys" "/etc/chrony/chrony-ipsec.keys"
+install -v -o 0 -g 0 -m 0644 "/vagrant/chronyd/chrony-ipsec.conf" "/etc/chrony/chrony-ipsec.conf"
+install -v -o 0 -g 0 -m 0644 "/vagrant/chronyd/chrony-ipsec.service" "/etc/systemd/system/chrony-ipsec.service"
+install -v -o 0 -g 0 -m 0644 "/vagrant/chronyd/chrony.service" "/etc/systemd/system/chrony.service"
+install -v -o 0 -g 0 -m 0644 "/vagrant/chronyd/tmpfiles.conf" "/etc/tmpfiles.d/chrony.conf"
+install -v -o 0 -g 0 -m 0644 "/vagrant/chronyd/usr.sbin.chronyd" "/etc/apparmor.d/local/usr.sbin.chronyd"
+systemd-tmpfiles --create chrony.conf
+
+echo " [*] Install chrony unit drop-in..."
+install -v -o 0 -g 0 -m 755 -d "/etc/systemd/system/chronyd-ipsec.service.d"
+install -v -o 0 -g 0 -m 644 "/vagrant/ipsec0.conf" \
+    "/etc/systemd/system/chronyd-ipsec.service.d/ipsec0.conf"
+
+echo " [*] Restart apparmor to apply new chrony rules"
+systemctl restart apparmor
+echo " [*] Enable chronyd-ipsec..."
+systemctl daemon-reload
+systemctl enable --now chrony-ipsec.service
+systemctl restart chrony.service
+systemctl restart chrony-ipsec.service
 
 echo " [*] Install nginx configuration for updates..."
 for f in "update.clip-os.org.conf" "update.clip-os.org-key.pem" "update.clip-os.org.pem"; do
