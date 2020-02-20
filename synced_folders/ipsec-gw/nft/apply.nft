@@ -137,6 +137,9 @@ table ip filter {
         # systemd-timesyncd: allow outgoing NTP
         udp dport 123 meta skuid "systemd-timesync" accept
 
+        # chronyd: allow outgoing NTP
+        udp dport 123 meta skuid {"_chrony"} accept
+
         # Log everything else
         log prefix "OUTPUT PUBLIC (drop): " drop
     }

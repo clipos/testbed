@@ -51,6 +51,9 @@ table ip filter {
         # Allow incoming HTTPS (update server)
         tcp dport { 443 } accept
 
+        # Allow incoming NTP (chrony)
+        udp dport 123 accept
+
         # Log everything else
         log prefix "INPUT IPSEC (drop): " drop
     }
@@ -122,3 +125,5 @@ table ip6 filter {
         # log prefix "FORWARD IPv6 (drop): " drop
     }
 }
+
+# vim: set ts=4 sts=4 sw=4 et ai ft=conf:
