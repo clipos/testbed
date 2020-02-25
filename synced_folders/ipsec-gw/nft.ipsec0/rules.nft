@@ -54,6 +54,9 @@ table ip filter {
         # Allow incoming NTP (chrony)
         udp dport 123 accept
 
+        # Allow incoming rsyslog traffic
+        tcp dport 514 accept
+
         # Log everything else
         log prefix "INPUT IPSEC (drop): " drop
     }

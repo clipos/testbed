@@ -27,11 +27,14 @@ apt-get -y -q dist-upgrade
 #   - strongSwan (with swanctl utilities and systemd interfacing)
 #   - nftables (firewall)
 #   - nginx (update server)
+#   - chrony (NTP client)
+#   - rsyslog & rsyslog-relp (log forwarding with RELP support)
 apt-get -y -q install \
     charon-systemd \
     nftables \
     nginx \
-    chrony
+    chrony \
+    rsyslog rsyslog-relp
 
 echo " [*] Install the dummy IPsec PKI..."
 install -v -o 0 -g 0 -m 0644 "/vagrant/pki/root-ca.cert.pem" "/etc/swanctl/x509ca/root-ca.cert.pem"
@@ -115,6 +118,23 @@ systemctl daemon-reload
 systemctl enable --now chrony-ipsec.service
 systemctl restart chrony.service
 systemctl restart chrony-ipsec.service
+
+echo " [*] Create rsyslog user..."
+install -v -o 0 -g 0 -m 644 "/vagrant/rsyslog/sysusers.conf" "/etc/sysusers.d/rsyslog.conf"
+systemd-sysusers rsyslog.conf
+
+echo " [*] Install rsyslog configuration..."
+install -v -o 0 -g 0 -m 0644 "/vagrant/rsyslog/rsyslog.conf" "/etc/rsyslog.conf"
+
+echo " [*] Install rsyslog unit drop-in..."
+install -v -o 0 -g 0 -m 755 -d "/etc/systemd/system/rsyslog.service.d"
+install -v -o 0 -g 0 -m 644 "/vagrant/ipsec0.conf" \
+    "/etc/systemd/system/rsyslog.service.d/ipsec0.conf"
+
+echo " [*] Enable rsyslog..."
+systemctl daemon-reload
+systemctl enable --now rsyslog.service
+systemctl restart rsyslog.service
 
 echo " [*] Install nginx configuration for updates..."
 for f in "update.clip-os.org.conf" "update.clip-os.org-key.pem" "update.clip-os.org.pem"; do
