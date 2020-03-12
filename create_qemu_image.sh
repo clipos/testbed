@@ -124,7 +124,7 @@ main() {
                 exit 1
             fi
         fi
-        local opts="--rm -ti ${user} --volume ..:/mnt:rw --workdir /mnt/testbed ${runtime_env}"
+        local opts="--security-opt label=disable --rm -ti ${user} --volume ..:/mnt:rw --workdir /mnt/testbed ${runtime_env}"
         prefix="${runtime} run ${opts} ${image}"
     else
         echo "[*] Running using system installed guestfish"
