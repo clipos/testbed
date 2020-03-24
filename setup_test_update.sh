@@ -17,6 +17,17 @@ main() {
         exit 1
     fi
 
+    # Figure out which one of minisign or rsign2 is installed
+    local sign=""
+    if [[ -n "$(command -v minisign)" ]]; then
+        sign="minisign -S -m"
+    elif [[ -n "$(command -v rsign)" ]]; then
+        sign="rsign sign"
+    else
+        >&2 echo "[!] Please install 'minisign' or 'rsign2'. Aborting."
+        exit 1
+    fi
+
     local -r repo_root="$(cosmk repo-root-path)"
     local -r product="$(cosmk product-name)"
     local -r current_version="$(cosmk product-version)"
@@ -45,7 +56,7 @@ main() {
     local pubkey="../src/platform/updater/test/keys/pub"
     local privkey="../src/platform/updater/test/keys/priv"
     for f in "${product}-core" "${product}-efiboot"; do
-        echo "" | rsign sign \
+        echo "" | ${sign} \
             "${dist}/${f}" \
             -p "${pubkey}" \
             -s "${privkey}" \
