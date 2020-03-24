@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 # Copyright © 2019 ANSSI. All rights reserved.
 
-# Provisioning script for the Debian IPsec gateway
+# Provisioning script to create a Debian testing Vagrant box
 
 set -eu -o pipefail
 
@@ -18,19 +18,8 @@ sed -i 's|buster|testing|g' /etc/apt/sources.list
 apt-get -y -q update
 apt-get -y -q dist-upgrade
 
-# Install:
-#   - strongSwan (with swanctl utilities and systemd interfacing)
-#   - nftables (firewall)
-#   - nginx (update server)
-#   - supplementary handy tools for developer/tester convenience
-apt-get -y -q install \
-    charon-systemd \
-    nftables \
-    nginx \
-    vim bash-completion tmux openssl tree htop
-
-# Set appropriate hostname
-echo "ipsec-gw" > /etc/hostname
+# Install supplementary handy tools for developer/tester convenience
+apt-get -y -q install vim bash-completion tmux openssl tree htop
 
 # Installs the sshd-keygen oneshot service. This oneshot unit is required to
 # re-generate the SSHD host keys that are automatically deleted when packing

@@ -17,23 +17,14 @@ Requirements
   by `vagrant-libvirt` to produce a Vagrant box out of an exisiting VM thanks
   to the command `vagrant package`
 
-Build the Vagrant boxes
------------------------
+Set up a CLIP OS virtualized testbed
+------------------------------------
 
-Build and import the box for the IPsec gateway:
-
-```
-$ ./build_vagrant_boxes.sh
-```
-
-Spin up a CLIP OS virtualized testbed with Vagrant and libvirt
---------------------------------------------------------------
-
-Setup the testbed with:
+Set up the testbed with:
 
 ```
-$ vagrant up
+$ ./setup_testbed.sh
 ```
 
-Running `cosmk spawn` or `sujust run` in the CLIP OS development tree will now
-spawn a CLIP OS QEMU VM in this environment.
+Running `cosmk test run` in the CLIP OS development tree will now spawn a CLIP
+OS QEMU VM in this environment.

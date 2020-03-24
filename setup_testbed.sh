@@ -15,12 +15,27 @@ fi
 readonly PROGNAME="${BASH_SOURCE[0]##*/}"
 readonly PROGPATH="$(realpath "${BASH_SOURCE[0]%/*}")"
 
+# Latest Debian Testing box version available from the public CI
+BOX_VERSION="20200324"
+
 main() {
     pushd "${PROGPATH}" > /dev/null
 
-    if [[ -z "$(vagrant box list 2>/dev/null | grep "clipos-testbed/ipsec-gw" | cut -f1 -d\ )" ]]; then
-        echo "[+] Building Vagrant boxes..."
-        ./build_vagrant_boxes.sh
+    if [[ -z "$(vagrant box list 2>/dev/null | grep "clipos-testbed/debian" | cut -f1 -d\ )" ]]; then
+        if [[ -z "$(command -v cosmk)" ]]; then
+            >&2 echo "[!] Could not find \"cosmk\". Aborting."
+            exit 1
+        fi
+
+        local -r url="$(cosmk ci-artifacts)"
+        if [[ -n "${url}" ]]; then
+            echo "[+] Downloading Vagrant box from ${url}..."
+            vagrant box add --name "clipos-testbed/debian" \
+                "${url}/00_vagrant_boxes/clipos-testbed_debian.${BOX_VERSION}.box"
+        else
+            echo "[+] Building Vagrant boxes..."
+            ./build_vagrant_boxes.sh
+        fi
     fi
 
     vagrant up

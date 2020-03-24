@@ -4,6 +4,13 @@
 
 set -eu -o pipefail
 
+# Set appropriate hostname
+echo " [*] Setup hostname to: '${HOSTNAME}'..."
+HOSTNAME="ipsec-gw"
+hostnamectl set-hostname "${HOSTNAME}"
+echo "${HOSTNAME}" > /etc/hostname
+echo "127.0.0.1 ${HOSTNAME}" >> /etc/hosts
+
 echo " [*] Fix networkd configuration..."
 for f in "50-vagrant-ens7.network" "99-dhcp.network"; do
     install -v -o 0 -g 0 -m 0644 "/vagrant/networkd/${f}" "/etc/systemd/network/${f}"
@@ -11,6 +18,19 @@ done
 
 echo " [*] Restart systemd-networkd & systemd-resolved services..."
 systemctl restart systemd-networkd systemd-resolved
+
+# Update both packages index and installed packages
+apt-get -y -q update
+apt-get -y -q dist-upgrade
+
+# Install:
+#   - strongSwan (with swanctl utilities and systemd interfacing)
+#   - nftables (firewall)
+#   - nginx (update server)
+apt-get -y -q install \
+    charon-systemd \
+    nftables \
+    nginx
 
 echo " [*] Install the dummy IPsec PKI..."
 install -v -o 0 -g 0 -m 0644 "/vagrant/pki/root-ca.cert.pem" "/etc/swanctl/x509ca/root-ca.cert.pem"
@@ -68,9 +88,6 @@ systemctl enable --now netns@ipsec0.service
 echo " [*] Restart strongSwan service..."
 systemctl daemon-reload
 systemctl restart strongswan.service
-
-echo " [*] Setup hostname in /etc/hosts..."
-echo "127.0.0.1 ipsec-gw" >> /etc/hosts
 
 echo " [*] Install nginx configuration for updates..."
 for f in "update.clip-os.org.conf" "update.clip-os.org-key.pem" "update.clip-os.org.pem"; do

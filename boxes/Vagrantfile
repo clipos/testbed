@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 # Copyright © 2019 ANSSI. All rights reserved.
 
-# Vagrantfile to create the "clipos-testbed/ipsec-gw" box.
+# Vagrantfile to create the "clipos-testbed/debian" box.
 
 ENVNAME = "build_clipos-testbed"
 
@@ -20,8 +20,8 @@ Vagrant.configure("2") do |config|
   # Disable default synced_folder configuration
   config.vm.synced_folder ".", "/vagrant", disabled: true
 
-  config.vm.define "ipsec-gw" do |ipsecgw|
-    ipsecgw.vm.box = "debian/buster64"
+  config.vm.define "debian" do |debian|
+    debian.vm.box = "debian/buster64"
 
     # Do not automatically change the SSH keypair for a newly generated key pair
     # otherwise we would need to re-embed the default insecure Vagrant SSH key
@@ -33,7 +33,7 @@ Vagrant.configure("2") do |config|
     config.ssh.insert_key = false
 
     # Provider-specific settings for this VM:
-    ipsecgw.vm.provider "libvirt" do |libvirt|
+    debian.vm.provider "libvirt" do |libvirt|
       libvirt.cpus = 4
       libvirt.cputopology sockets: "1", cores: "2", threads: "2"
       libvirt.memory = 2048
@@ -42,11 +42,10 @@ Vagrant.configure("2") do |config|
     end
 
     # rsync the /vagrant folder rather than using NFS
-    ipsecgw.vm.synced_folder "./synced_folders/ipsec-gw", "/vagrant/", type:
-      "rsync"
+    debian.vm.synced_folder ".", "/vagrant/", type: "rsync"
 
     # Provisioning:
-    ipsecgw.vm.provision "shell", path: "provisioning/ipsec-gw.sh"
+    debian.vm.provision "shell", path: "debian.sh"
   end
 
 end

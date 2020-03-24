@@ -17,9 +17,9 @@ Vagrant.configure("2") do |config|
     libvirt.management_network_mode = "none"  # Do not NAT this bridge interface
   end
 
-  # IPsec gateway with our image created with Packer
+  # IPsec gateway based on Debian testing image
   config.vm.define "ipsec-gw" do |ipsecgw|
-    ipsecgw.vm.box = "clipos-testbed/ipsec-gw"
+    ipsecgw.vm.box = "clipos-testbed/debian"
 
     # Main local network interface with internet access. CLIP OS workstations
     # and gateway will be connected to this network.

@@ -22,7 +22,7 @@ main() {
 
     # Boxes to build:
     local -r boxes=(
-        'ipsec-gw'
+        'debian'
     )
 
     for box in "${boxes[@]}"; do
