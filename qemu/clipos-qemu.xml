@@ -15,6 +15,10 @@
     <vmport state='off'/>
     <smm state='on'/>
   </features>
+  <cpu mode='custom' match='minimum'>
+    <model>Haswell-noTSX-IBRS</model>
+    <feature policy='require' name='vmx'/>
+  </cpu>
   <clock offset='utc'>
     <timer name='rtc' tickpolicy='catchup'/>
     <timer name='pit' tickpolicy='delay'/>
