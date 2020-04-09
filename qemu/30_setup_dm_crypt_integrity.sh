@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 # Copyright © 2017 ANSSI. All rights reserved.
 
-# Setup DM-Crypt+Integrity for LV_NAME Logical Volume and create an ext4
+# Setup DM-Crypt+Integrity for LV_NAME Logical Volume and potentially create a
 # filesystem inside the image IMAGE_FILE.
 
 # Safety settings: do not remove!
@@ -12,6 +12,7 @@ readonly IMAGE_FILE="${1:?IMAGE_FILE is needed}"
 readonly VG_NAME="${2:?VG_NAME is needed}"
 readonly KEY_FILE="${3:?KEY_FILE is needed}"
 readonly LV_NAME="${4:?LV_NAME is needed}"
+readonly LV_FSTYPE="${5:-none}"
 
 if [[ ! -f "${IMAGE_FILE}" ]]; then
     echo "${IMAGE_FILE} does not exist!"
@@ -44,23 +45,25 @@ debug sh "echo -n '${luks_key}' | cryptsetup luksFormat \
     --cipher aes-xts-plain64 \
     --integrity hmac-sha256 \
     --pbkdf argon2i \
-    --label core_state \
+    --label $LV_NAME \
     --key-file - \
     /dev/${VG_NAME}/${LV_NAME}"
 _EOF_
 echo "${IMAGE}: Setting up DM-Crypt+Integrity for ${LV_NAME}: OK"
 
-echo "${IMAGE}: Creating ext4 filesystem in ${LV_NAME}..."
-guestfish --rw --keys-from-stdin <<_EOF_
-add-drive ${IMAGE_FILE} label:main format:qcow2
+if [[ $LV_FSTYPE != "none" ]]; then
+    echo "${IMAGE}: Creating $LV_FSTYPE filesystem in ${LV_NAME}..."
+    guestfish --rw --keys-from-stdin <<-_EOF_
+		add-drive ${IMAGE_FILE} label:main format:qcow2
 
-run
+		run
 
-luks-open /dev/${VG_NAME}/${LV_NAME} core_state
-${luks_key}
+		luks-open /dev/${VG_NAME}/${LV_NAME} $LV_NAME
+		${luks_key}
 
-mkfs ext4 /dev/mapper/core_state
-_EOF_
-echo "${IMAGE}: Creating ext4 filesystem in ${LV_NAME}: OK"
+		mkfs $LV_FSTYPE /dev/mapper/$LV_NAME
+		_EOF_
+    echo "${IMAGE}: Creating $LV_FSTYPE filesystem in ${LV_NAME}: OK"
+fi
 
 # vim: set ts=4 sts=4 sw=4 et ft=sh:

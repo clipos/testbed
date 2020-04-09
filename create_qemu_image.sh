@@ -143,7 +143,7 @@ main() {
 
         echo -n "${CORE_STATE_KEY}" > "${core_state_keyfile}"
         ${prefix} ./qemu/30_setup_dm_crypt_integrity.sh "${empty_disk_image}" "${vg_name}" \
-            "${core_state_keyfile}" core_state
+            "${core_state_keyfile}" core_state ext4
     else
         echo "[!] Re-using cached empty QEMU disk image!"
     fi
