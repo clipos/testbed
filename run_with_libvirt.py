@@ -92,11 +92,9 @@ def main():
 
     workdir_qcow2_image = os.path.join(working_dir, "main.qcow2")
     try:
-        shutil.copy(qcow2_image, workdir_qcow2_image)
-        # TODO: Find out why the following command does not yield a valid image
-        # subprocess.run(
-        #     ["qemu-img", "create", "-f", "qcow2", "-b", qcow2_image, workdir_qcow2_image],
-        #     check=True)
+        subprocess.run(["qemu-img", "create", "-f", "qcow2", "-b", qcow2_image,
+                        "-F", "qcow2", "-q", workdir_qcow2_image],
+                       check=True)
     except:
         print("[!] Could not create backing image for '{}' in workdir!".format(qcow2_image))
         sys.exit(1)

@@ -73,7 +73,6 @@ main() {
         local -r core_state="$(realpath --relative-to=${PROGPATH} ${5})"
 
         local -r vg_name="mainvg"
-        local -r core_lv_prefix="core_${version}"
 
         local -r output="${PROGPATH}/run"
     fi
@@ -97,7 +96,7 @@ main() {
     # Make sure we operate from the root of the testbed repository
     cd "${PROGPATH}"
 
-    local -r empty_disk_image="${output}/empty.qcow2"
+    local -r disk_image="${output}/main.qcow2"
     local -r core_state_keyfile="${output}/core_state.keyfile"
     mkdir -p "${output}"
 
@@ -131,34 +130,33 @@ main() {
         echo "[*] Running using system installed guestfish"
     fi
 
-    # Re-use cached empty disk image if available
-    if [[ ! -f "${empty_disk_image}" ]] || [[ ! -f "${core_state_keyfile}" ]]; then
+    # Re-use snapshot of disk image if available
+    if [[ ! -f "${disk_image}" ]] || [[ ! -f "${core_state_keyfile}" ]]; then
         echo "[*] Creating empty QEMU disk image"
-        ${prefix} ./qemu/10_create_disk_image.sh "${empty_disk_image}" "${vg_name}" qcow2 20G
+        ${prefix} ./qemu/10_create_disk_image.sh "${disk_image}" "${vg_name}" qcow2 20G
 
         # Sizes are in MB (See http://libguestfs.org/guestfish.1.html#lvcreate)
-        ${prefix} ./qemu/20_insert_empty_lv.sh "${empty_disk_image}" "${vg_name}" "${core_lv_name}" 4096
-        ${prefix} ./qemu/20_insert_empty_lv.sh "${empty_disk_image}" "${vg_name}" core_state 512
-        ${prefix} ./qemu/20_insert_empty_lv.sh "${empty_disk_image}" "${vg_name}" core_swap 1024
+        ${prefix} ./qemu/20_insert_empty_lv.sh "${disk_image}" "${vg_name}" "${core_lv_name}" 4096
+        ${prefix} ./qemu/20_insert_empty_lv.sh "${disk_image}" "${vg_name}" core_state 512
+        ${prefix} ./qemu/20_insert_empty_lv.sh "${disk_image}" "${vg_name}" core_swap 1024
 
         echo -n "${CORE_STATE_KEY}" > "${core_state_keyfile}"
-        ${prefix} ./qemu/30_setup_dm_crypt_integrity.sh "${empty_disk_image}" "${vg_name}" \
+        ${prefix} ./qemu/30_setup_dm_crypt_integrity.sh "${disk_image}" "${vg_name}" \
             "${core_state_keyfile}" core_state ext4
+
+        echo "[*] Creating snapshot of empty QEMU disk image for future reuse"
+        qemu-img snapshot -c empty "$disk_image"
     else
-        echo "[!] Re-using cached empty QEMU disk image!"
+        echo "[!] Re-using snapshot of empty QEMU disk image!"
+        qemu-img snapshot -a empty "$disk_image"
     fi
 
-    local -r final_disk_image="${output}/main.qcow2"
+    ${prefix} ./qemu/50_insert_efiboot.sh "${disk_image}" "${efiboot}"
 
-    # Work on a copy of the cached empty disk image
-    cp "${empty_disk_image}" "${final_disk_image}"
-
-    ${prefix} ./qemu/50_insert_efiboot.sh "${final_disk_image}" "${efiboot}"
-
-    ${prefix} ./qemu/51_insert_image.sh "${final_disk_image}" "${vg_name}" "${core}" "${core_lv_name}"
+    ${prefix} ./qemu/51_insert_image.sh "${disk_image}" "${vg_name}" "${core}" "${core_lv_name}"
 
     # Install core_state initial content
-    ${prefix} ./qemu/52_insert_fs_tar.sh "${final_disk_image}" "${vg_name}" \
+    ${prefix} ./qemu/52_insert_fs_tar.sh "${disk_image}" "${vg_name}" \
         "${core_state_keyfile}" "${core_state}" core_state
 
     echo "[*] Done!"
