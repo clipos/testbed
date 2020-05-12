@@ -4,6 +4,9 @@
 
 set -eu -o pipefail
 
+export DEBIAN_FRONTEND=noninteractive
+export LANG=C.UTF-8
+
 # Set appropriate hostname
 echo " [*] Setup hostname to: '${HOSTNAME}'..."
 HOSTNAME="ipsec-gw"
