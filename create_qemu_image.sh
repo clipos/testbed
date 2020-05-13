@@ -23,7 +23,7 @@ readonly CORE_STATE_KEY="clipos"
 main() {
     local runtime=""
     # Is libguestfs installed on the system and are we told to use it?
-    if [[ ( -n "$(command -v guestfish)" ) && ( -n "${CLIPOS_USEHOST_TOOLS+x}" ) ]]; then
+    if [[ ( -n "$(command -v guestfish)" ) && ( -n "${CLIPOS_USE_HOST_TOOLS+x}" ) ]]; then
         runtime="host"
     # Is podman or docker available?
     elif [[ -n "$(command -v podman)" ]]; then
@@ -32,7 +32,7 @@ main() {
         runtime="docker"
     else
         >&2 echo "[!] Could not find either \"podman\" or \"docker\". Aborting."
-        >&2 echo "Set CLIPOS_USE_HOST_TOOLS="true" if you want to use guestfish from your system."
+        >&2 echo "Set the CLIPOS_USE_HOST_TOOLS environment variable if you want to use your system's libguestfs."
         exit 1
     fi
 
