@@ -145,10 +145,10 @@ main() {
             "${core_state_keyfile}" core_state ext4
 
         echo "[*] Creating snapshot of empty QEMU disk image for future reuse"
-        qemu-img snapshot -c empty "$disk_image"
+        ${prefix} qemu-img snapshot -c empty "$disk_image"
     else
         echo "[!] Re-using snapshot of empty QEMU disk image!"
-        qemu-img snapshot -a empty "$disk_image"
+        ${prefix} qemu-img snapshot -a empty "$disk_image"
     fi
 
     ${prefix} ./qemu/50_insert_efiboot.sh "${disk_image}" "${efiboot}"
