@@ -45,18 +45,24 @@ main() {
         local boxname="build_clipos-testbed_${box}"
         local cmd="virsh --connect qemu:///system domblklist ${boxname}"
         local image="$(${cmd} | grep "vda" | awk '{print $2}')"
-        echo "[!] Warning: Giving everyone read access to '${image}'"
-        sudo chmod a+r "${image}"
 
-        echo "[+] Packaging the '${box}' box..."
-        vagrant package --output "${box}.box" "${box}"
+        if [ -z "$image" ]; then
+            echo "[!] Warning: No image for the '${boxname}' domain was found."
+            vagrant destroy --force "${box}" || true
+        else
+            echo "[!] Warning: Giving everyone read access to '${image}'"
+            sudo chmod a+r "${image}"
 
-        echo "[+] Importing the '${box}' box..."
-        vagrant box add --force --name "clipos-testbed/${box}" "${box}.box"
+            echo "[+] Packaging the '${box}' box..."
+            vagrant package --output "${box}.box" "${box}"
 
-        echo "[+] Cleaning up the '${box}' box..."
-        rm "${box}.box"
-        vagrant destroy --force "${box}" || true
+            echo "[+] Importing the '${box}' box..."
+            vagrant box add --force --name "clipos-testbed/${box}" "${box}.box"
+
+            echo "[+] Cleaning up the '${box}' box..."
+            rm "${box}.box"
+            vagrant destroy --force "${box}" || true
+        fi
     done
 
     popd > /dev/null
@@ -65,3 +71,5 @@ main() {
 }
 
 main
+
+# vim: set ts=4 sts=4 sw=4 et ft=sh:
