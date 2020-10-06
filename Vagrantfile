@@ -9,7 +9,7 @@ Vagrant.configure("2") do |config|
   config.vm.provider "libvirt" do |libvirt|
     # Do not use the directory name in which this Vagrantfile sits as prefix
     # to the libvirt domains:
-    libvirt.default_prefix = "#{ENVNAME}"
+    libvirt.default_prefix = "#{ENVNAME}_"
 
     # Libvirt management network settings:
     libvirt.management_network_name = "#{ENVNAME}_management-network"
